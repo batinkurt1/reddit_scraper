@@ -1,60 +1,73 @@
-#from bs4 import BeautifulSoup
-#import requests
-#import re
-
-# file=requests.get('https://www.reddit.com/r/blueteamsec/hot')
-#soup = BeautifulSoup(file.text, 'html.parser')
-# for tag in soup.find_all(string=re.compile("journey")):
-#    print(tag.name)
-
-
 import praw
-from praw.models import MoreComments
+
+
+
 with open('secrets.txt') as fp:
-    client_id,client_secret,user_agent=fp.readlines()
+    client_id, client_secret, user_agent = [r.strip() for r in fp.readlines()]
 
-emaillist=[]
-keywords=["vmray","any.run","cape","intezer"]
+
+with open("keywords.txt") as fp:
+    keywords = [r.strip() for r in fp.readlines()]
+with open("subreddits.txt") as fp:
+    subreddits = [r.strip() for r in fp.readlines()]
+with open("emaillist.txt") as fp:
+    emailrecepients = [r.strip() for r in fp.readlines()]
+
+
 reddit = praw.Reddit(client_id=client_id,
-                   client_secret=client_secret,
-                   user_agent=user_agent)
-
-blueteamsec=reddit.subreddit("blueteamsec")
-
-posts_to_scrape=[]
-
-for post in blueteamsec.hot(limit=3):
-    posts_to_scrape.append(f"https://www.reddit.com/r/blueteamsec/comments/{post.id}")
-    for keyword in keywords:
-        if keyword in str(post.title).lower() or keyword in str(post.selftext).lower():
-            emaillist.append(f"https://www.reddit.com/r/blueteamsec/comments/{post.id}")
-for post in blueteamsec.top(time_filter="week"):
-    posts_to_scrape.append(f"https://www.reddit.com/r/blueteamsec/comments/{post.id}")
-    for keyword in keywords:
-        if keyword in str(post.title).lower() or keyword in str(post.selftext).lower():
-            emaillist.append(f"https://www.reddit.com/r/blueteamsec/comments/{post.id}")
-for post in blueteamsec.top(time_filter="month"):
-    posts_to_scrape.append(f"https://www.reddit.com/r/blueteamsec/comments/{post.id}")
-    for keyword in keywords:
-        if keyword in str(post.title).lower() or keyword in str(post.selftext).lower():
-            emaillist.append(f"https://www.reddit.com/r/blueteamsec/comments/{post.id}")
-for post in blueteamsec.top(time_filter="year"):
-    posts_to_scrape.append(f"https://www.reddit.com/r/blueteamsec/comments/{post.id}")
-    for keyword in keywords:
-        if keyword in str(post.title).lower() or keyword in str(post.selftext).lower():
-            emaillist.append(f"https://www.reddit.com/r/blueteamsec/comments/{post.id}")
-
-
-posts_to_scrape=list(set(posts_to_scrape))
+                     client_secret=client_secret,
+                     user_agent=user_agent)
 
 
 
+emaillist = []
+
+for subreddit in subreddits:
+    currentsub = reddit.subreddit(subreddit)
+
+    for post in currentsub.top(time_filter="week"):
+        submission = reddit.submission(
+            url=f"https://www.reddit.com/r/{currentsub}/comments/{post.id}")
+        
+        submission.comments.replace_more(limit=0)
+
+        for keyword in keywords:
+
+            if f"https://www.reddit.com/r/{currentsub}/comments/{post.id}" in emaillist:
+                continue
+
+            if keyword in str(post.title).lower() or keyword in str(post.selftext).lower():
+                emaillist.append(
+                    f"https://www.reddit.com/r/{currentsub}/comments/{post.id}")
+
+            for comment in submission.comments.list():
+                if keyword in str(comment.body).lower():
+                    emaillist.append(
+                        f"https://www.reddit.com/r/{currentsub}/comments/{post.id}")
+
+
+emaillist = list(set(emaillist))
 
 
 
-for link in posts_to_scrape:
+
+
+
+
+
+
+
+"""submission = reddit.submission(
+    url='https://www.reddit.com/r/blueteamsec/comments/vc2rt5')
+submission.comments.replace_more(limit=0)
+print(submission)
+for comment in submission.comments.list():
+    print(comment.body)"""
+
+
+"""for link in posts_to_scrape:
     submission=reddit.submission(url=link)
-    
+
     for comment in submission.comments:
         if type(comment) == MoreComments:
             continue
@@ -62,12 +75,14 @@ for link in posts_to_scrape:
         for keyword in keywords:
             if keyword in str(comment.body).lower():
                 emaillist.append(link)
-                break
+                break"""
 
 
 
-#submission=reddit.submission(url='https://www.reddit.com/r/blueteamsec/comments/vc2rt5')
-#print(submission)
+
+
+# submission=reddit.submission(url='https://www.reddit.com/r/blueteamsec/comments/vc2rt5')
+# print(submission)
 """ for comment in submission.comments:
     if type(comment) == MoreComments:
         continue
@@ -76,16 +91,33 @@ for link in posts_to_scrape:
         pass """
 
 
-
-
 """ def reply_checker(comment):
     if type(comment) == MoreComments:
         continue
     print(comment.body)
     if len(comment.replies)!=0:
         pass """
-    
-emaillist=list(set(emaillist))
 
-print(emaillist)
 
+
+"""for post in currentsub.hot(limit=3):
+        posts_to_scrape.append(f"https://www.reddit.com/r/blueteamsec/comments/{post.id}")
+        for keyword in keywords:
+            if keyword in str(post.title).lower() or keyword in str(post.selftext).lower():
+                emaillist.append(f"https://www.reddit.com/r/blueteamsec/comments/{post.id}")
+    for post in currentsub.top(time_filter="week"):
+        posts_to_scrape.append(f"https://www.reddit.com/r/blueteamsec/comments/{post.id}")
+        for keyword in keywords:
+            if keyword in str(post.title).lower() or keyword in str(post.selftext).lower():
+                emaillist.append(f"https://www.reddit.com/r/blueteamsec/comments/{post.id}")
+    for post in currentsub.top(time_filter="month"):
+        posts_to_scrape.append(f"https://www.reddit.com/r/blueteamsec/comments/{post.id}")
+        for keyword in keywords:
+            if keyword in str(post.title).lower() or keyword in str(post.selftext).lower():
+                emaillist.append(f"https://www.reddit.com/r/blueteamsec/comments/{post.id}")
+    for post in currentsub.top(time_filter="year"):
+        posts_to_scrape.append(f"https://www.reddit.com/r/blueteamsec/comments/{post.id}")
+        for keyword in keywords:
+            if keyword in str(post.title).lower() or keyword in str(post.selftext).lower():
+                emaillist.append(f"https://www.reddit.com/r/blueteamsec/comments/{post.id}")
+"""
