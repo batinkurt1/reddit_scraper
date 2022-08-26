@@ -29,7 +29,7 @@ emaillist = []
 numberofposts = 0
 numberofcomments = 0
 
-"""for subreddit in subreddits:
+for subreddit in subreddits:
     currentsub = reddit.subreddit(subreddit)
 
     for post in currentsub.top(time_filter="week"):
@@ -52,7 +52,7 @@ numberofcomments = 0
                 numberofcomments += 1
                 if keyword in str(comment.body).lower():
                     emaillist.append(
-                        f"https://www.reddit.com/r/{currentsub}/comments/{post.id}")"""
+                        f"https://www.reddit.com/r/{currentsub}/comments/{post.id}")
 
 
 emaillist = list(set(emaillist))
