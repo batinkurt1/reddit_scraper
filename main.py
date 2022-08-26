@@ -1,5 +1,12 @@
 import praw
+import smtplib
+import ssl
+import email
 
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+import datetime
 
 
 with open('secrets.txt') as fp:
@@ -10,8 +17,6 @@ with open("keywords.txt") as fp:
     keywords = [r.strip() for r in fp.readlines()]
 with open("subreddits.txt") as fp:
     subreddits = [r.strip() for r in fp.readlines()]
-with open("emaillist.txt") as fp:
-    emailrecepients = [r.strip() for r in fp.readlines()]
 
 
 reddit = praw.Reddit(client_id=client_id,
@@ -19,16 +24,19 @@ reddit = praw.Reddit(client_id=client_id,
                      user_agent=user_agent)
 
 
-
 emaillist = []
 
-for subreddit in subreddits:
+numberofposts = 0
+numberofcomments = 0
+
+"""for subreddit in subreddits:
     currentsub = reddit.subreddit(subreddit)
 
     for post in currentsub.top(time_filter="week"):
+        numberofposts += 1
         submission = reddit.submission(
             url=f"https://www.reddit.com/r/{currentsub}/comments/{post.id}")
-        
+
         submission.comments.replace_more(limit=0)
 
         for keyword in keywords:
@@ -41,17 +49,47 @@ for subreddit in subreddits:
                     f"https://www.reddit.com/r/{currentsub}/comments/{post.id}")
 
             for comment in submission.comments.list():
+                numberofcomments += 1
                 if keyword in str(comment.body).lower():
                     emaillist.append(
-                        f"https://www.reddit.com/r/{currentsub}/comments/{post.id}")
+                        f"https://www.reddit.com/r/{currentsub}/comments/{post.id}")"""
 
 
 emaillist = list(set(emaillist))
 
+with open("email_credentials.txt") as fp:
+    sender_email, sender_password = [r.strip() for r in fp.readlines()]
+
+with open("email_recepients.txt") as fp:
+    emailrecepients = [r.strip() for r in fp.readlines()]
+
+week = f"{datetime.date.today()}-{datetime.date.today()-datetime.timedelta(days=7)}"
+
+subject = f"[{week}] Automated Reddit Scraper: Scraping cybersec subreddits to find this week's related news"
+
+postlist="\n ".join(emaillist)
+
+body = f"""I have scraped {len(subreddits)} subreddits, {numberofposts} posts, and {numberofcomments} comments to bring you this week's related news. \n 
+Below, you can find the results. \n""" + postlist
 
 
+message = MIMEMultipart()
+message["From"] = sender_email
+message["Subject"] = subject
+message.attach(MIMEText(body, "plain"))
 
+text = message.as_string()
 
+context = ssl.create_default_context()
+
+with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+        server.login(sender_email, sender_password)
+        for recepient in emailrecepients:
+            message["To"] = recepient
+            server.sendmail(sender_email, recepient, text)
+
+    
+    
 
 
 
@@ -78,9 +116,6 @@ for comment in submission.comments.list():
                 break"""
 
 
-
-
-
 # submission=reddit.submission(url='https://www.reddit.com/r/blueteamsec/comments/vc2rt5')
 # print(submission)
 """ for comment in submission.comments:
@@ -97,7 +132,6 @@ for comment in submission.comments.list():
     print(comment.body)
     if len(comment.replies)!=0:
         pass """
-
 
 
 """for post in currentsub.hot(limit=3):
