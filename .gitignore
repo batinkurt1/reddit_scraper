@@ -1,3 +1,6 @@
 /secrets.txt
 /email_recepients.txt
 /email_credentials.txt
+/token.json
+/credentials.json
+/google_credentials.txt

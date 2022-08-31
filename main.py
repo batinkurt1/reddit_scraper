@@ -1,13 +1,21 @@
-import smtplib
-import ssl
 import email
 import requests
+import base64
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 import datetime
 import os
+
+
+
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+from google.oauth2.credentials import Credentials
+from google.auth.transport.requests import Request
+from google_auth_oauthlib.flow import InstalledAppFlow
+
 
 api_url = "https://api.pushshift.io"
 
@@ -73,12 +81,32 @@ message["From"] = sender_email
 message["Subject"] = subject
 message.attach(MIMEText(body, "plain"))
 
-text = message.as_string()
 
-context = ssl.create_default_context()
 
-with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
-        server.login(sender_email, sender_password)
-        for recepient in emailrecepients:
-            message["To"] = recepient
-            server.sendmail(sender_email, recepient, text)
+SCOPES=['https://www.googleapis.com/auth/gmail.send']
+
+creds=None
+if os.path.exists('token.json'):
+    creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+if not creds or not creds.valid:
+    if creds and creds.expired and creds.refresh_token:
+        creds.refresh(Request())
+    else:
+        flow = InstalledAppFlow.from_client_secrets_file(
+            'credentials.json', SCOPES)
+        creds = flow.run_local_server(port=0)
+    with open('token.json', 'w') as token:
+        token.write(creds.to_json())
+
+try:
+    service = build('gmail', 'v1', credentials=creds)
+    for recepient in emailrecepients:
+        message["To"] = recepient
+        text = message.as_string()
+        encoded_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
+        create_message = {
+            'raw': encoded_message
+        }
+        send_message = (service.users().messages().send(userId="me", body=create_message).execute())
+except HttpError as error:
+    print("an error occured")
