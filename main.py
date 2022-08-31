@@ -1,58 +1,53 @@
-import praw
 import smtplib
 import ssl
 import email
+import requests
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 import datetime
+import os
+
+api_url = "https://api.pushshift.io"
+
+abs_dir = os.path.dirname(__file__)
 
 
-with open('secrets.txt') as fp:
-    client_id, client_secret, user_agent = [r.strip() for r in fp.readlines()]
-
-
-with open("keywords.txt") as fp:
+with open(abs_dir+"/keywords.txt") as fp:
     keywords = [r.strip() for r in fp.readlines()]
-with open("subreddits.txt") as fp:
+with open(abs_dir+"/subreddits.txt") as fp:
     subreddits = [r.strip() for r in fp.readlines()]
 
 
-reddit = praw.Reddit(client_id=client_id,
-                     client_secret=client_secret,
-                     user_agent=user_agent)
+
 
 
 emaillist = []
-
+post_links = []
+comment_links = []
 numberofposts = 0
 numberofcomments = 0
 
-for subreddit in subreddits:
-    currentsub = reddit.subreddit(subreddit)
+for keyword in keywords:
+    for subreddit in subreddits:
+        params = {"q": keyword,
+                  "after": "7d",
+                  "subreddit": subreddit,
+                  "size": 100}
+        res = requests.get(
+            f"{api_url}/reddit/search/comment", params=params)
+        if res.status_code==200:
+            for data in res.json()["data"]:
+                comment_links.append("https://www.reddit.com"+data["permalink"])
+        res = requests.get(
+            f"{api_url}/reddit/search/submission", params=params)
+        if res.status_code==200:
+            for data in res.json()["data"]:
+                post_links.append("https://www.reddit.com"+data["permalink"])
 
-    for post in currentsub.top(time_filter="week"):
-        numberofposts += 1
-        submission = reddit.submission(
-            url=f"https://www.reddit.com/r/{currentsub}/comments/{post.id}")
-
-        submission.comments.replace_more(limit=0)
-
-        for keyword in keywords:
-
-            if f"https://www.reddit.com/r/{currentsub}/comments/{post.id}" in emaillist:
-                continue
-
-            if keyword in str(post.title).lower() or keyword in str(post.selftext).lower():
-                emaillist.append(
-                    f"https://www.reddit.com/r/{currentsub}/comments/{post.id}")
-
-            for comment in submission.comments.list():
-                numberofcomments += 1
-                if keyword in str(comment.body).lower():
-                    emaillist.append(
-                        f"https://www.reddit.com/r/{currentsub}/comments/{post.id}")
+numberofposts = len(post_links)
+numberofcomments = len(comment_links)
 
 
 emaillist = list(set(emaillist))
@@ -87,71 +82,3 @@ with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
         for recepient in emailrecepients:
             message["To"] = recepient
             server.sendmail(sender_email, recepient, text)
-
-    
-    
-
-
-
-
-
-"""submission = reddit.submission(
-    url='https://www.reddit.com/r/blueteamsec/comments/vc2rt5')
-submission.comments.replace_more(limit=0)
-print(submission)
-for comment in submission.comments.list():
-    print(comment.body)"""
-
-
-"""for link in posts_to_scrape:
-    submission=reddit.submission(url=link)
-
-    for comment in submission.comments:
-        if type(comment) == MoreComments:
-            continue
-    
-        for keyword in keywords:
-            if keyword in str(comment.body).lower():
-                emaillist.append(link)
-                break"""
-
-
-# submission=reddit.submission(url='https://www.reddit.com/r/blueteamsec/comments/vc2rt5')
-# print(submission)
-""" for comment in submission.comments:
-    if type(comment) == MoreComments:
-        continue
-    print(comment.body)
-    if len(comment.replies)!=0:
-        pass """
-
-
-""" def reply_checker(comment):
-    if type(comment) == MoreComments:
-        continue
-    print(comment.body)
-    if len(comment.replies)!=0:
-        pass """
-
-
-"""for post in currentsub.hot(limit=3):
-        posts_to_scrape.append(f"https://www.reddit.com/r/blueteamsec/comments/{post.id}")
-        for keyword in keywords:
-            if keyword in str(post.title).lower() or keyword in str(post.selftext).lower():
-                emaillist.append(f"https://www.reddit.com/r/blueteamsec/comments/{post.id}")
-    for post in currentsub.top(time_filter="week"):
-        posts_to_scrape.append(f"https://www.reddit.com/r/blueteamsec/comments/{post.id}")
-        for keyword in keywords:
-            if keyword in str(post.title).lower() or keyword in str(post.selftext).lower():
-                emaillist.append(f"https://www.reddit.com/r/blueteamsec/comments/{post.id}")
-    for post in currentsub.top(time_filter="month"):
-        posts_to_scrape.append(f"https://www.reddit.com/r/blueteamsec/comments/{post.id}")
-        for keyword in keywords:
-            if keyword in str(post.title).lower() or keyword in str(post.selftext).lower():
-                emaillist.append(f"https://www.reddit.com/r/blueteamsec/comments/{post.id}")
-    for post in currentsub.top(time_filter="year"):
-        posts_to_scrape.append(f"https://www.reddit.com/r/blueteamsec/comments/{post.id}")
-        for keyword in keywords:
-            if keyword in str(post.title).lower() or keyword in str(post.selftext).lower():
-                emaillist.append(f"https://www.reddit.com/r/blueteamsec/comments/{post.id}")
-"""
