@@ -1,1 +1,15 @@
 blueteamsec
+redteamsec
+Malware
+ExploitDev
+ReverseEngineering
+AskNetsec
+netsec
+cybersecurity
+netsecstudents
+computerforensics
+hackernews
+hackersec
+PenetrationTesting
+websecurity
+sysadmin

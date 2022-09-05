@@ -57,6 +57,8 @@ for keyword in keywords:
 numberofposts = len(post_links)
 numberofcomments = len(comment_links)
 
+emaillist.extend(post_links)
+emaillist.extend(comment_links)
 
 emaillist = list(set(emaillist))
 
@@ -71,7 +73,7 @@ week = f"{datetime.date.today()}-{datetime.date.today()-datetime.timedelta(days=
 subject = f"[{week}] Automated Reddit Scraper: Scraping cybersec subreddits to find this week's related news"
 
 postlist="\n ".join(emaillist)
-
+print
 body = f"""I have scraped {len(subreddits)} subreddits, {numberofposts} posts, and {numberofcomments} comments to bring you this week's related news. \n 
 Below, you can find the results. \n""" + postlist
 

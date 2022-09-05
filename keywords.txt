@@ -3,3 +3,15 @@ any.run
 anyrun
 cape
 intezer
+falcon
+carbon black
+cuckoo
+sandbox
+hatching
+ingram
+joesandbox
+reversinglabs
+siemplify
+threatray
+fireeye
+opswat
