@@ -47,12 +47,13 @@ for keyword in keywords:
             f"{api_url}/reddit/search/comment", params=params)
         if res.status_code==200:
             for data in res.json()["data"]:
-                comment_links.append("https://www.reddit.com"+data["permalink"])
+                comment_links.append( keyword + ": " + "https://www.reddit.com"+data["permalink"])
         res = requests.get(
             f"{api_url}/reddit/search/submission", params=params)
         if res.status_code==200:
             for data in res.json()["data"]:
-                post_links.append("https://www.reddit.com"+data["permalink"])
+                post_links.append(keyword + ": " + "https://www.reddit.com"+data["permalink"])
+
 
 numberofposts = len(post_links)
 numberofcomments = len(comment_links)
@@ -73,7 +74,6 @@ week = f"{datetime.date.today()}-{datetime.date.today()-datetime.timedelta(days=
 subject = f"[{week}] Automated Reddit Scraper: Scraping cybersec subreddits to find this week's related news"
 
 postlist="\n ".join(emaillist)
-print
 body = f"""I have scraped {len(subreddits)} subreddits, {numberofposts} posts, and {numberofcomments} comments to bring you this week's related news. \n 
 Below, you can find the results. \n""" + postlist
 
