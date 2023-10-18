@@ -45,10 +45,6 @@ python reddit_scraper.py
 
 - Customize the email subject and body in the script to fit your specific needs.
 
-## License
-
-This script is provided under the [MIT License](LICENSE). Feel free to modify and use it as needed.
-
 ---
 
 Enjoy using the script!
